@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Share Location</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background:
+    linear-gradient(
+      135deg,
+      #07111f,
+      #102a43,
+      #07111f
+    );
+  color: white;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  padding: 25px 18px;
+}
+
+.card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 22px;
+  padding: 25px;
+  box-shadow:
+    0 15px 50px rgba(0,0,0,0.35);
+  backdrop-filter: blur(15px);
+}
+
+.logo {
+  text-align: center;
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+  font-size: 28px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #b9c7d8;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 20px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #19d36b;
+  color: #06140b;
+}
+
+button:disabled {
+  opacity: 0.55;
+}
+
+.status {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  text-align: center;
+}
+
+.info {
+  margin-top: 18px;
+  line-height: 1.7;
+  font-size: 14px;
+  color: #d6dfeb;
+}
+
+#map {
+  width: 100%;
+  height: 280px;
+  border: 0;
+  border-radius: 16px;
+  margin-top: 20px;
+  display: none;
+}
+
+.coords {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 12px;
+  display: none;
+  font-size: 13px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.online {
+  color: #35e883;
+}
+
+.offline {
+  color: #ff7373;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card">
+
+    <div class="logo">📍</div>
+
+    <h1>Share Your Location</h1>
+
+    <div class="subtitle">
+      Allow location access to share your
+      current location.
+    </div>
+
+    <button
+      id="shareButton"
+      onclick="startSharing()"
+    >
+      Allow & Share Location
+    </button>
+
+    <div
+      id="status"
+      class="status"
+    >
+      Waiting for location permission...
+    </div>
+
+    <div
+      id="coords"
+      class="coords"
+    ></div>
+
+    <iframe
+      id="map"
+      loading="lazy"
+      allowfullscreen
+      referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+
+    <div class="info">
+
+      <b>Privacy:</b><br>
+      Your browser will ask for permission
+      before sending your location.
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/*******************************************************
+ * CONFIGURATION
+ *******************************************************/
+
+const BACKEND_URL =
+"https://script.google.com/macros/s/AKfycbzPp9A96uilwISd_ftxAh4u_r5o01rQv2WL7ZyePGdOaiLDmhOwRZe49Fnx1sDhnem6ag/exec";
+
+const SHARE_ID =
+"AKfycbyO6ith0ZzQRKIHD8xfQPhKnSH91w9fAp46LhjC1GWPLHpIAIQN-q4C_3aSs7BK2edW";
+
+
+/*******************************************************
+ * ELEMENTS
+ *******************************************************/
+
+const shareButton =
+document.getElementById("shareButton");
+
+const statusBox =
+document.getElementById("status");
+
+const coordsBox =
+document.getElementById("coords");
+
+const mapFrame =
+document.getElementById("map");
+
+
+/*******************************************************
+ * START LOCATION SHARING
+ *******************************************************/
+
+function startSharing() {
+
+  if (!navigator.geolocation) {
+
+    statusBox.innerHTML =
+      "❌ This browser does not support location.";
+
+    return;
+  }
+
+  shareButton.disabled = true;
+
+  statusBox.innerHTML =
+    "📡 Requesting location permission...";
+
+  navigator.geolocation.watchPosition(
+    locationSuccess,
+    locationError,
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
+    }
+  );
+}
+
+
+/*******************************************************
+ * LOCATION SUCCESS
+ *******************************************************/
+
+function locationSuccess(position) {
+
+  const latitude =
+    position.coords.latitude;
+
+  const longitude =
+    position.coords.longitude;
+
+  const accuracy =
+    position.coords.accuracy || 0;
+
+  const device =
+    navigator.userAgent;
+
+  const time =
+    new Date().toISOString();
+
+  statusBox.innerHTML =
+    '<span class="online">' +
+    '● Location sharing active' +
+    '</span>';
+
+  coordsBox.style.display = "block";
+
+  coordsBox.innerHTML =
+    "<b>Latitude:</b> " +
+    latitude +
+    "<br>" +
+
+    "<b>Longitude:</b> " +
+    longitude +
+    "<br>" +
+
+    "<b>Accuracy:</b> " +
+    Math.round(accuracy) +
+    " meters<br>" +
+
+    "<b>Last Update:</b> " +
+    new Date().toLocaleString();
+
+
+  /*
+   * Show map preview.
+   */
+  const mapUrl =
+    "https://maps.google.com/maps?q=" +
+    encodeURIComponent(
+      latitude + "," + longitude
+    ) +
+    "&z=17&output=embed";
+
+  mapFrame.src = mapUrl;
+
+  mapFrame.style.display =
+    "block";
+
+
+  /*
+   * Send location to Apps Script.
+   *
+   * URL encoded request is intentionally used
+   * to avoid unnecessary browser CORS preflight.
+   */
+  const params =
+    new URLSearchParams();
+
+  params.append(
+    "action",
+    "location"
+  );
+
+  params.append(
+    "id",
+    SHARE_ID
+  );
+
+  params.append(
+    "latitude",
+    latitude
+  );
+
+  params.append(
+    "longitude",
+    longitude
+  );
+
+  params.append(
+    "accuracy",
+    accuracy
+  );
+
+  params.append(
+    "device",
+    device
+  );
+
+  params.append(
+    "userAgent",
+    navigator.userAgent
+  );
+
+  params.append(
+    "time",
+    time
+  );
+
+
+  fetch(BACKEND_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type":
+        "application/x-www-form-urlencoded"
+    },
+    body: params.toString()
+  })
+  .catch(function(error) {
+
+    console.log(
+      "Location upload error:",
+      error
+    );
+
+  });
+}
+
+
+/*******************************************************
+ * LOCATION ERROR
+ *******************************************************/
+
+function locationError(error) {
+
+  shareButton.disabled = false;
+
+  let message =
+    "Unable to get location.";
+
+  if (error.code === 1) {
+
+    message =
+      "❌ Location permission was denied.";
+
+  } else if (error.code === 2) {
+
+    message =
+      "❌ Location is unavailable.";
+
+  } else if (error.code === 3) {
+
+    message =
+      "❌ Location request timed out.";
+  }
+
+  statusBox.innerHTML =
+    message;
+}
+
+
+/*******************************************************
+ * VIEW LATEST LOCATION
+ *
+ * Can be used by opening:
+ *
+ * inside.html?view=1
+ *******************************************************/
+
+function getLatestLocation() {
+
+  fetch(
+    BACKEND_URL +
+    "?action=location&id=" +
+    encodeURIComponent(SHARE_ID)
+  )
+
+  .then(function(response) {
+    return response.json();
+  })
+
+  .then(function(data) {
+
+    if (
+      !data.success ||
+      !data.available
+    ) {
+
+      statusBox.innerHTML =
+        "Waiting for location...";
+
+      return;
+    }
+
+    const location =
+      data.location;
+
+    const latitude =
+      location.latitude;
+
+    const longitude =
+      location.longitude;
+
+    const accuracy =
+      location.accuracy || 0;
+
+
+    statusBox.innerHTML =
+      '<span class="online">' +
+      '● Location received' +
+      '</span>';
+
+
+    coordsBox.style.display =
+      "block";
+
+    coordsBox.innerHTML =
+      "<b>Latitude:</b> " +
+      latitude +
+      "<br>" +
+
+      "<b>Longitude:</b> " +
+      longitude +
+      "<br>" +
+
+      "<b>Accuracy:</b> " +
+      Math.round(accuracy) +
+      " meters<br>" +
+
+      "<b>Last Update:</b> " +
+      new Date(
+        location.time
+      ).toLocaleString();
+
+
+    const mapUrl =
+      "https://maps.google.com/maps?q=" +
+      encodeURIComponent(
+        latitude + "," + longitude
+      ) +
+      "&z=17&output=embed";
+
+    mapFrame.src = mapUrl;
+
+    mapFrame.style.display =
+      "block";
+
+  })
+
+  .catch(function(error) {
+
+    console.log(
+      "Viewer error:",
+      error
+    );
+
+  });
+}
+
+
+/*******************************************************
+ * VIEWER MODE
+ *******************************************************/
+
+const urlParams =
+new URLSearchParams(
+  window.location.search
+);
+
+const viewerMode =
+urlParams.get("view");
+
+
+if (viewerMode === "1") {
+
+  shareButton.style.display =
+    "none";
+
+  statusBox.innerHTML =
+    "📡 Searching for shared location...";
+
+  getLatestLocation();
+
+  /*
+   * Automatically refresh location
+   * every 3 seconds.
+   */
+  setInterval(
+    getLatestLocation,
+    3000
+  );
+}
+
+</script>
+
+</body>
+</html>
